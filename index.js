@@ -11,6 +11,8 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
   maxHttpBufferSize: 50 * 1024 * 1024,
+  pingInterval: 8000,
+  pingTimeout: 5000,
 });
 
 // rooms: key = "MACHINEID_SESSIONCODE" → { host: socketId, client: socketId|null }
@@ -46,7 +48,8 @@ io.on('connection', (socket) => {
     room.client = socket.id;
     socket.join(key);
     socket.emit('room-joined', { key });
-    io.to(room.host).emit('client-joined');
+    // Broadcast en la sala (alcanza al HOST aunque su socket ID haya cambiado)
+    socket.to(key).emit('client-joined');
     console.log(`[SALA] Unido: ${key}`);
   });
 
